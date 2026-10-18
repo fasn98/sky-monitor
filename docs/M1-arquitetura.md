@@ -231,7 +231,7 @@ sky-monitor/
 1. ~~**Licença do repositório**~~ — **Decidido em 2026-10-18: GPL-3.0** (ver `LICENSE`). É compatível com o indi-allsky e o pyindi-client.
 2. **Fase 2:** Seestar (mais rápido, menos flexível) ou montagem modular? Isso define qual backend do telescópio será construído primeiro.
 3. **Estação de meteoros dedicada** (seção 5): quer incluir no roadmap como fase opcional?
-4. **Hardware de desenvolvimento:** você já tem um Raspberry Pi 5? Sem ele, o M2 roda inteiro em Docker no PC com os simuladores INDI.
+4. ~~**Hardware de desenvolvimento**~~ — **Respondido em 2026-10-18:** ainda não há Raspberry Pi. O M2 será desenvolvido no notebook do usuário, em Docker, com os simuladores INDI. A migração para o Pi fica para depois.
 5. **Varanda:** quando souber, a orientação (N/S/L/O) e os obstáculos alimentam a máscara de horizonte.
 
 ## 9. Suposições em aberto
