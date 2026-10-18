@@ -20,6 +20,10 @@ Pensado para uma estação em varanda de apartamento em Santa Catarina, Brasil (
 - [Especificação completa (prompt original)](docs/prompt.md)
 - [M1 — Arquitetura](docs/M1-arquitetura.md)
 
+## Licença
+
+[GPL-3.0](LICENSE)
+
 ## Princípios
 
 - Nenhum dado inventado; toda incerteza é registrada.

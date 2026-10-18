@@ -74,7 +74,7 @@ flowchart LR
 
 **Princípio central:** o indi-allsky é tratado como um *produtor de dados* externo. O sky-monitor lê os arquivos que ele grava e as mensagens MQTT que ele publica, sem importar nem modificar o código dele. Isso mantém os dois projetos atualizáveis de forma independente.
 
-> **Nota de licença (não é aconselhamento jurídico):** o indi-allsky é GPL-3.0 [1] e o pyindi-client é GPLv3+ [10]. Comunicação por arquivos e MQTT costuma ser tratada como programas separados. Já um módulo nosso que importe o pyindi-client provavelmente herda a GPL. A licença deste repositório está em aberto (ver seção 8).
+> **Nota de licença (não é aconselhamento jurídico):** o indi-allsky é GPL-3.0 [1] e o pyindi-client é GPLv3+ [10]. Comunicação por arquivos e MQTT costuma ser tratada como programas separados. Já um módulo nosso que importe o pyindi-client provavelmente herda a GPL. Este repositório é licenciado sob **GPL-3.0**, o que elimina esse conflito.
 
 ---
 
@@ -228,7 +228,7 @@ sky-monitor/
 
 ## 8. Perguntas para você (decidem o M2 em diante)
 
-1. **Licença do repositório:** MIT, que é mais aberta, ou GPL-3.0, que é compatível com tudo o que vamos usar (inclusive pyindi-client)? Se o módulo de telescópio usar pyindi-client, a GPL-3.0 é o caminho mais simples.
+1. ~~**Licença do repositório**~~ — **Decidido em 2026-10-18: GPL-3.0** (ver `LICENSE`). É compatível com o indi-allsky e o pyindi-client.
 2. **Fase 2:** Seestar (mais rápido, menos flexível) ou montagem modular? Isso define qual backend do telescópio será construído primeiro.
 3. **Estação de meteoros dedicada** (seção 5): quer incluir no roadmap como fase opcional?
 4. **Hardware de desenvolvimento:** você já tem um Raspberry Pi 5? Sem ele, o M2 roda inteiro em Docker no PC com os simuladores INDI.
