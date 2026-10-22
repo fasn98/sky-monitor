@@ -9,6 +9,7 @@ Pensado para uma estação em varanda de apartamento em Santa Catarina, Brasil (
 | Marco | Descrição | Status |
 |---|---|---|
 | M1 | Arquitetura e decisão build-vs-reuse | ✅ Proposta para revisão — [docs/M1-arquitetura.md](docs/M1-arquitetura.md) |
+| — | Adaptador de fotos de celular (DNG/JPEG → FITS) para testes com céu real | ✅ [protocolo](docs/protocolo-captura-celular.md) |
 | M2 | Captura all-sky no simulador (FITS, timelapse, keogram) | ⏳ |
 | M3 | Calibração da lente, nuvens, rastros, satélites | ⏳ |
 | M4 | Dashboard e alertas | ⏳ |
@@ -19,6 +20,15 @@ Pensado para uma estação em varanda de apartamento em Santa Catarina, Brasil (
 
 - [Especificação completa (prompt original)](docs/prompt.md)
 - [M1 — Arquitetura](docs/M1-arquitetura.md)
+- [Protocolo de captura com celular](docs/protocolo-captura-celular.md)
+
+## Desenvolvimento
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+pytest && mypy && ruff check .
+```
 
 ## Licença
 

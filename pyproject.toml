@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sky-monitor"
+version = "0.1.0"
+description = "Monitoramento do céu: câmera all-sky + telescópio robótico"
+readme = "README.md"
+license = "GPL-3.0-only"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "astropy>=6.0",
+    "exifread>=3.0",
+    "rawpy>=0.21",
+    "pillow>=10.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "mypy>=1.10", "ruff>=0.5", "tifffile>=2024.1"]
+
+[project.scripts]
+skymonitor-phone-ingest = "skymonitor.ingest.phone:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/skymonitor"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+mypy_path = "src"
+packages = ["skymonitor"]
+
+[[tool.mypy.overrides]]
+module = ["exifread.*", "rawpy.*", "astropy.*", "tifffile.*"]
+ignore_missing_imports = true

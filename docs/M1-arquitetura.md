@@ -19,6 +19,7 @@ Este documento fecha o marco M1. Nenhum código foi escrito ainda. Toda afirmaç
 | Agendador | **Construir** um agendador leve | N.I.N.A. só roda em Windows [7]. O Ekos é um app desktop (automatizável via D-Bus [8]), pesado demais para uma varanda com Raspberry Pi |
 | Dashboard | **Construir** (FastAPI), apontando para a UI do indi-allsky onde ela já resolve | Evita duplicar a visualização ao vivo |
 | Fotometria | **Construir** com photutils, exportando no **AAVSO Extended File Format** | Formato documentado [9] |
+| Fonte de teste com celular *(adicionado em 2026-10-22)* | **Construído** `skymonitor.ingest.phone`: DNG/JPEG → FITS | Permite testar o processamento com céu real antes da câmera all-sky. Protocolo em [`protocolo-captura-celular.md`](protocolo-captura-celular.md) |
 
 ---
 
@@ -57,6 +58,7 @@ flowchart LR
   SENS --> IAS
   IAS --> DEW
   IAS -- FITS/JPEG --> ING
+  PHONE[Celular S24<br/>DNG/JPEG - testes] -. ingest.phone → FITS .-> ING
   IAS -- métricas --> MQ --> ING
   ING --> CAL --> DET
   EXT1 --> DET
