@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 import unicodedata
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -88,11 +89,12 @@ class PixelData:
     """Pixel array plus what is needed to interpret it.
 
     kind == "cfa": raw Bayer mosaic, linear, shape (H, W), uint16.
+    kind == "linear_rgb": demosaiced but still linear DNG ("LinearRaw"), shape (3, H, W).
     kind == "rgb": processed JPEG, gamma-encoded (non-linear), shape (3, H, W), uint8.
     """
 
     data: npt.NDArray[Any]
-    kind: Literal["cfa", "rgb"]
+    kind: Literal["cfa", "linear_rgb", "rgb"]
     bayer_pattern: str | None = None
     black_levels: tuple[float, ...] | None = None
     white_level: int | None = None
@@ -283,6 +285,10 @@ def load_pixels(path: Path) -> PixelData:
             )
             black = tuple(float(b) for b in raw.black_level_per_channel)
             white = int(raw.white_level)
+        if data.ndim == 3:
+            # Some phones write already-demosaiced "LinearRaw" DNGs (no Bayer mosaic).
+            # [A VERIFICAR] which kind the S24 Pro mode produces.
+            return PixelData(np.moveaxis(data, -1, 0).copy(), "linear_rgb", None, black, white)
         return PixelData(data, "cfa", pattern, black, white)
     if suffix in JPEG_SUFFIXES:
         with Image.open(path) as img:
@@ -324,6 +330,7 @@ def build_header(meta: PhoneFrameMetadata, pixels: PixelData) -> fits.Header:
     put("SITEELEV", meta.elevation_m, "[m] Elevation")
     put("LOCSRC", meta.location_source, "exif_gps or fallback_site")
     put("ROWORDER", "TOP-DOWN", "Row 0 is the top of the image")
+    put("PIXKIND", pixels.kind, "cfa, linear_rgb or rgb")
 
     if pixels.kind == "cfa":
         put("LINEAR", True, "Pixel values are linear in flux")
@@ -333,6 +340,11 @@ def build_header(meta: PhoneFrameMetadata, pixels: PixelData) -> fits.Header:
         put("WHITELVL", pixels.white_level, "[ADU] Saturation level")
         for i, level in enumerate(pixels.black_levels or ()):
             put(f"BLKLVL{i}", level, f"[ADU] Black level, CFA channel {i}")
+    elif pixels.kind == "linear_rgb":
+        put("LINEAR", True, "Linear DNG, already demosaiced")
+        put("WHITELVL", pixels.white_level, "[ADU] Saturation level")
+        for i, level in enumerate(pixels.black_levels or ()):
+            put(f"BLKLVL{i}", level, f"[ADU] Black level, channel {i}")
     else:
         put("LINEAR", False, "JPEG: gamma-encoded, not for photometry")
         put("COLORSP", "sRGB", "Assumed JPEG color space")
@@ -384,19 +396,77 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--lon", type=float, help="Longitude de fallback (graus, leste +)")
     p.add_argument("--elev", type=float, help="Altitude de fallback (m)")
     p.add_argument("--overwrite", action="store_true")
+    p.add_argument(
+        "--watch",
+        action="store_true",
+        help="Fica observando as pastas e converte arquivos novos assim que chegam",
+    )
+    p.add_argument("--poll", type=float, default=10.0, help="Intervalo entre varreduras (s)")
+    p.add_argument(
+        "--settle",
+        type=float,
+        default=5.0,
+        help="Só converte arquivos sem modificação há pelo menos N s (ainda copiando)",
+    )
     return p
 
 
 def _expand(inputs: Sequence[Path]) -> list[Path]:
+    """List input files. When a folder has both X.dng and X.jpg (phones often save both),
+    keep only the DNG: same stem would produce the same X.fits, and RAW is the better data.
+    """
     files: list[Path] = []
     for item in inputs:
         if item.is_dir():
+            candidates = sorted(f for f in item.iterdir() if f.suffix.lower() in SUPPORTED_SUFFIXES)
+            raw_stems = {f.stem for f in candidates if f.suffix.lower() in RAW_SUFFIXES}
             files.extend(
-                sorted(f for f in item.iterdir() if f.suffix.lower() in SUPPORTED_SUFFIXES)
+                f for f in candidates if f.suffix.lower() in RAW_SUFFIXES or f.stem not in raw_stems
             )
         else:
             files.append(item)
     return files
+
+
+def pending_files(
+    inputs: Sequence[Path], out_dir: Path, *, now: float, settle_s: float
+) -> list[Path]:
+    """Files that have no FITS output yet and have not been modified for settle_s seconds."""
+    ready: list[Path] = []
+    for f in _expand(inputs):
+        if (out_dir / f"{f.stem}.fits").exists():
+            continue
+        try:
+            age = now - f.stat().st_mtime
+        except FileNotFoundError:
+            continue
+        if age >= settle_s:
+            ready.append(f)
+    return ready
+
+
+def _convert_and_report(
+    paths: Sequence[Path],
+    out_dir: Path,
+    *,
+    tz: tzinfo | None,
+    site: Site | None,
+    overwrite: bool,
+) -> int:
+    failures = 0
+    for path in paths:
+        try:
+            out, meta = convert_to_fits(
+                path, out_dir, fallback_tz=tz, fallback_site=site, overwrite=overwrite
+            )
+        except Exception as exc:
+            failures += 1
+            print(f"FALHA  {path}: {exc}", file=sys.stderr, flush=True)
+            continue
+        print(f"OK     {path.name} -> {out}", flush=True)
+        for warning in meta.warnings:
+            print(f"       aviso: {warning}", flush=True)
+    return failures
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -407,20 +477,28 @@ def main(argv: Sequence[str] | None = None) -> int:
     site = Site(args.lat, args.lon, args.elev) if args.lat is not None else None
     tz = ZoneInfo(args.tz) if args.tz else None
 
-    failures = 0
-    for path in _expand(args.inputs):
-        try:
-            out, meta = convert_to_fits(
-                path, args.out, fallback_tz=tz, fallback_site=site, overwrite=args.overwrite
-            )
-        except Exception as exc:
-            failures += 1
-            print(f"FALHA  {path}: {exc}", file=sys.stderr)
-            continue
-        print(f"OK     {path.name} -> {out}")
-        for warning in meta.warnings:
-            print(f"       aviso: {warning}")
-    return 1 if failures else 0
+    if not args.watch:
+        failures = _convert_and_report(
+            _expand(args.inputs), args.out, tz=tz, site=site, overwrite=args.overwrite
+        )
+        return 1 if failures else 0
+
+    print(f"Observando {', '.join(map(str, args.inputs))} (Ctrl+C para parar)…", flush=True)
+    failed: set[Path] = set()
+    try:
+        while True:
+            todo = [
+                f
+                for f in pending_files(args.inputs, args.out, now=time.time(), settle_s=args.settle)
+                if f not in failed
+            ]
+            for f in todo:
+                if _convert_and_report([f], args.out, tz=tz, site=site, overwrite=False):
+                    failed.add(f)  # don't retry a broken file forever
+            time.sleep(args.poll)
+    except KeyboardInterrupt:
+        print("Parado.", flush=True)
+        return 0
 
 
 if __name__ == "__main__":

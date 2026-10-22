@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -11,11 +13,13 @@ from astropy.io import fits
 from conftest import DngFactory, JpegFactory
 from skymonitor.ingest.phone import (
     Site,
+    _expand,
     bayer_pattern_string,
     convert_to_fits,
     dms_to_degrees,
     main,
     parse_metadata,
+    pending_files,
     read_exif,
 )
 
@@ -185,3 +189,30 @@ def test_synthetic_dng_to_fits(make_dng: DngFactory, tmp_path: Path, pattern: st
     # Synthetic DNG has no EXIF time/exposure: nothing is invented.
     assert "DATE-OBS" not in hdr and "EXPTIME" not in hdr
     assert meta.date_obs_utc is None
+
+
+# ------------------------------------------------------------- folders & watch
+
+
+def test_expand_prefers_dng_over_jpeg_with_same_stem(
+    make_dng: DngFactory, make_jpeg: JpegFactory, tmp_path: Path
+) -> None:
+    make_dng("20261022_193512.dng")
+    make_jpeg("20261022_193512.jpg")
+    make_jpeg("20261022_193600.jpg")  # JPEG without RAW twin is kept
+    names = sorted(p.name for p in _expand([tmp_path]))
+    assert names == ["20261022_193512.dng", "20261022_193600.jpg"]
+
+
+def test_pending_files_waits_for_settle_and_skips_done(
+    make_jpeg: JpegFactory, tmp_path: Path
+) -> None:
+    out = tmp_path / "out"
+    a = make_jpeg("a.jpg")
+    b = make_jpeg("b.jpg")
+    now = time.time()
+    os.utime(a, (now - 60, now - 60))  # old: ready
+    os.utime(b, (now, now))  # just written: not settled yet
+    assert pending_files([tmp_path], out, now=now, settle_s=5) == [a]
+    convert_to_fits(a, out)
+    assert pending_files([tmp_path], out, now=now + 10, settle_s=5) == [b]
