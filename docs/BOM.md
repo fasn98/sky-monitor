@@ -24,7 +24,7 @@ Legenda: **[OBR]** obrigatório · **[REC]** recomendado · **[OPC]** opcional.
 
 | # | Qtd | Item | Especificação | Por quê | Atenção na compra |
 |---|---|---|---|---|---|
-| B1 | 1 | **Raspberry Pi High Quality Camera — versão M12** [OBR] | Sony IMX477, 12,3 MP, 7,9 mm de diagonal (1/2.3"), filtro IR integrado | Suportada pelo indi-allsky via libcamera, com captura RAW (DNG) | **Vem sem lente** e não funciona sem uma. Existe também a versão C/CS: escolha a **M12** |
+| B1 | 1 | **Raspberry Pi High Quality Camera — versão M12** [OBR] | Sony IMX477, 12,3 MP, 7,9 mm de diagonal (1/2.3"), filtro IR integrado | Suportada pelo indi-allsky via libcamera, com captura RAW (DNG) | **Vem sem lente** e não funciona sem uma. Prefira a **M12**. Alternativa: versão C/CS + a lente LN031, que vem com adaptador M12 → C/CS |
 | B2 | 1 | **Lente olho-de-peixe M12 para sensor 1/2.3"** [OBR] | Ex.: Arducam LN031, 1,56 mm, f/2, cerca de 180° na HQ Camera | Cobre o céu inteiro | Confirme "1/2.3 polegada" no anúncio. Lentes para sensores menores (1/3", 1/4") deixam a imagem com borda preta ou cortada |
 | B3 | 1 | **Cabo de câmera para Pi 5** [OBR] | "Mini para padrão" (22 → 15 pinos), 200–300 mm | O Pi 5 tem conector de câmera menor; o cabo que vem na HQ Camera não encaixa nele | Item barato e fácil de esquecer |
 
@@ -34,9 +34,9 @@ Legenda: **[OBR]** obrigatório · **[REC]** recomendado · **[OPC]** opcional.
 
 | # | Qtd | Item | Especificação | Por quê | Atenção na compra |
 |---|---|---|---|---|---|
-| C1 | 1 | **BME280** [OBR] | Módulo I2C, 3,3 V | Temperatura, umidade e pressão. Com isso o sistema calcula o **ponto de orvalho** e controla o aquecedor | **Muito anúncio vende BMP280 como BME280.** O BMP280 não mede umidade. Confirme "BME280" e "umidade" na descrição |
+| C1 | 1 | **BME280** [OBR] | Módulo I2C, 3,3 V | Temperatura, umidade e pressão. Com isso o sistema calcula o **ponto de orvalho** e controla o aquecedor | **Muito anúncio vende BMP280 como BME280.** O BMP280 não mede umidade. Confirme "BME280" e "umidade" na descrição. A placa roxa "GY-BME/P-280" é usada para os dois chips. Teste ao receber: o registrador 0xD0 retorna **0x60** no BME280 e 0x56–0x58 no BMP280 |
 | C2 | 1 | **MLX90614 versão 3 V (ESF-BAA)** [REC] | Infravermelho, I2C, endereço 0x5A, campo de 90° | Mede a temperatura do céu: céu limpo é muito mais frio que nuvem. É o detector de nuvens independente da câmera | Existe versão de 5 V (ESF-**AAA**). Prefira a **BAA** (3,3 V) ou um módulo GY-906 com regulador |
-| C3 | 1 | **DS18B20 à prova d'água** [REC] | Sonda 1-Wire com cabo | Temperatura da lente/cúpula, para comparar com o ponto de orvalho | Precisa de resistor de 4,7 kΩ (item D4) |
+| C3 | 1 | **DS18B20 à prova d'água** [REC] | Sonda 1-Wire com cabo | Temperatura da lente/cúpula, para comparar com o ponto de orvalho | Precisa de resistor de 4,7 kΩ. Existem kits que já trazem uma plaquinha adaptadora com o resistor |
 | C4 | 1 | TSL2591 [OPC] | Sensor de luz I2C | Referência de brilho do céu e do crepúsculo | — |
 | C5 | 1 | Módulo GPS USB (u-blox) [OPC] | Compatível com gpsd | Posição e horário sem internet | — |
 
