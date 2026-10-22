@@ -57,3 +57,21 @@ cd android
 ```
 
 Referência da API: https://developer.android.com/reference/android/hardware/camera2/package-summary
+
+## Resultados
+
+### Galaxy S24 (SM-S921B), Android 16 — 2026-10-22
+
+Relatório gerado pelo app no aparelho do usuário:
+
+| Câmera | Lado | Focal | FOV diag. (aprox.) | RAW | Manual | Exposição máx. | ISO | Abre direto |
+|---|---|---|---|---|---|---|---|---|
+| 0 | traseira (principal) | 5,40 mm | 87° | sim | sim | **0,10 s** | 25–3200 | sim |
+| 2 | traseira (ultra-wide) | 2,20 mm | 116° | sim | sim | **0,10 s** | 48–3200 | sim |
+| 5 | traseira (física, em 0) | 5,40 mm | 87° | sim | sim | 0,10 s | 25–3200 | não |
+| 6 | traseira (tele, física, em 0) | 7,00 mm | 36° | sim | sim | 0,10 s | 25–3200 | não |
+| 1, 3 | frontais | 3,30 mm | 81° / 71° | sim | sim | 0,10 s | 25–3200 | sim |
+
+**Conclusão:** apps de terceiros recebem RAW, controle manual e acesso direto à ultra-wide, mas a **exposição máxima anunciada é 0,1 s** em todas as câmeras. O app de câmera da Samsung (modo Pro) chega a 30 s, então os recursos de exposição longa ficam reservados ao app do fabricante.
+
+**Consequência:** um app de captura próprio no S24 só funcionaria empilhando muitos quadros de 0,1 s. Com isso o ruído de leitura se acumula a cada quadro, e o resultado fica muito pior que uma exposição única de 10–30 s. **[A VERIFICAR]** com uma captura de teste noturna (0,1 s, ISO 3200) quantas estrelas aparecem de fato.

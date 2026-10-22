@@ -8,6 +8,8 @@
 
 ---
 
+> **Resultado do app de diagnóstico (2026-10-22):** no S24, apps de terceiros têm exposição máxima de **0,1 s**. Por isso, as capturas de céu devem ser feitas com o **app de câmera da Samsung no modo Pro** (até 30 s), como descrito abaixo. Detalhes em [`android/README.md`](../android/README.md#resultados).
+
 ## 1. Equipamento
 
 - Galaxy S24, com bateria carregada e, se possível, um power bank.
