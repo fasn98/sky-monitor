@@ -22,6 +22,7 @@ Pensado para uma estação em varanda de apartamento em Santa Catarina, Brasil (
 - [Especificação completa (prompt original)](docs/prompt.md)
 - [M1 — Arquitetura](docs/M1-arquitetura.md)
 - [Protocolo de captura com celular](docs/protocolo-captura-celular.md)
+- [BOM — estação all-sky em protoboard](docs/BOM.md)
 
 ## Desenvolvimento
 
