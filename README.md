@@ -10,6 +10,7 @@ Pensado para uma estação em varanda de apartamento em Santa Catarina, Brasil (
 |---|---|---|
 | M1 | Arquitetura e decisão build-vs-reuse | ✅ Proposta para revisão — [docs/M1-arquitetura.md](docs/M1-arquitetura.md) |
 | — | Adaptador de fotos de celular (DNG/JPEG → FITS) para testes com céu real | ✅ [protocolo](docs/protocolo-captura-celular.md) |
+| — | App Android de diagnóstico de câmeras (Camera2, sem root) | ✅ [APK](https://github.com/fasn98/sky-monitor/releases/tag/android-diag-latest) · [instruções](android/README.md) |
 | M2 | Captura all-sky no simulador (FITS, timelapse, keogram) | ⏳ |
 | M3 | Calibração da lente, nuvens, rastros, satélites | ⏳ |
 | M4 | Dashboard e alertas | ⏳ |
