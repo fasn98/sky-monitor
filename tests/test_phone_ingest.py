@@ -216,3 +216,11 @@ def test_pending_files_waits_for_settle_and_skips_done(
     assert pending_files([tmp_path], out, now=now, settle_s=5) == [a]
     convert_to_fits(a, out)
     assert pending_files([tmp_path], out, now=now + 10, settle_s=5) == [b]
+
+
+def test_expand_searches_subfolders(make_jpeg: JpegFactory, tmp_path: Path) -> None:
+    sub = tmp_path / "2026-10-22"
+    sub.mkdir()
+    src = make_jpeg("night.jpg")
+    src.rename(sub / "night.jpg")
+    assert [p.name for p in _expand([tmp_path])] == ["night.jpg"]

@@ -412,16 +412,21 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _expand(inputs: Sequence[Path]) -> list[Path]:
-    """List input files. When a folder has both X.dng and X.jpg (phones often save both),
+    """List input files (folders are searched recursively, e.g. inbox/<date>/).
+    When a folder has both X.dng and X.jpg (phones often save both),
     keep only the DNG: same stem would produce the same X.fits, and RAW is the better data.
     """
     files: list[Path] = []
     for item in inputs:
         if item.is_dir():
-            candidates = sorted(f for f in item.iterdir() if f.suffix.lower() in SUPPORTED_SUFFIXES)
-            raw_stems = {f.stem for f in candidates if f.suffix.lower() in RAW_SUFFIXES}
+            candidates = sorted(
+                f for f in item.rglob("*") if f.is_file() and f.suffix.lower() in SUPPORTED_SUFFIXES
+            )
+            raw_stems = {(f.parent, f.stem) for f in candidates if f.suffix.lower() in RAW_SUFFIXES}
             files.extend(
-                f for f in candidates if f.suffix.lower() in RAW_SUFFIXES or f.stem not in raw_stems
+                f
+                for f in candidates
+                if f.suffix.lower() in RAW_SUFFIXES or (f.parent, f.stem) not in raw_stems
             )
         else:
             files.append(item)
