@@ -109,6 +109,9 @@ Primeiro teste real (2026-10-22, 21:22): `FOCALLEN=3.3`, `EXPTIME≈1/17 s`, `IS
 - Imagem de **3060 × 3060**, ou seja, proporção **1:1**. Para usar o sensor inteiro, configure **4:3** na câmera (12 MP = 4080 × 3060).
 - **[A VERIFICAR]** que processamento a Samsung aplica antes de gravar (redução de ruído, correção de sombreamento, nitidez). Os valores continuam lineares, mas não são o sinal bruto do sensor. Para detecção de estrelas e nuvens isso basta. Para fotometria fina, conta como limitação.
 
+### Horário do EXIF: início ou fim da exposição? (observação, 2026-10-22)
+Em dois DNGs de 10 s, o horário do **nome do arquivo** (21:43:14 e 21:43:25) vem **~10 s antes** do `DateTimeOriginal` do EXIF (21:43:24,6 e 21:43:36,2). Isso **sugere** que o EXIF marca o **fim** da exposição e o nome do arquivo marca o início. Por ora o conversor mantém `DATE-OBS` = EXIF e `DATEUNC` = exposição + resolução. **[A VERIFICAR]** com um evento de horário conhecido (ex.: passagem da ISS) antes de corrigir o horário para o meio da exposição.
+
 ## 6. Registro da sessão
 
 Crie um `notas.txt` na pasta da sessão com:
