@@ -86,6 +86,19 @@ skymonitor-phone-ingest ~/skymonitor/inbox -o ~/skymonitor/fits \
 - Quando houver X.dng e X.jpg com o mesmo nome, só o **DNG** é convertido.
 - Se a foto não tiver GPS: `--lat -23.55 --lon -46.63`.
 
+### Conferir se a foto saiu certa
+Depois de converter, o `fitsheader` mostra qual câmera e quais ajustes foram usados (focais do relatório do app de diagnóstico):
+
+| Campo | Esperado | Se vier diferente |
+|---|---|---|
+| `FOCALLEN` | **2.2** (ultra-wide traseira) | 5.4 = câmera principal · **3.3 = câmera frontal (selfie)** |
+| `PIXKIND` | `cfa` ou `linear_rgb` (DNG) | `rgb` = só JPEG: RAW desligado ou fora do modo Pro |
+| `EXPTIME` / `ISOSPEED` | os valores fixados no Pro (ex.: 10 s / 800) | frações de segundo e ISO alto = modo automático |
+
+Primeiro teste real (2026-10-22, 21:22): `FOCALLEN=3.3`, `EXPTIME≈1/17 s`, `ISOSPEED=2500`, `PIXKIND=rgb`. Ou seja: câmera frontal no modo automático. Hora (com fuso) e GPS chegaram corretos.
+
+> Para apontar a câmera **traseira** para o céu, a tela fica virada para baixo e você não a vê. Ajuste tudo antes, vire o celular e dispare com o timer (Camera Assistant) ou com um controle remoto Bluetooth/Galaxy Watch.
+
 ## 6. Registro da sessão
 
 Crie um `notas.txt` na pasta da sessão com:
