@@ -37,7 +37,7 @@ Configuração geral da câmera: [`protocolo-captura-celular.md`](protocolo-capt
 - **Carregador ligado** a sessão inteira.
 - **Economia de energia desligada** e **otimização de bateria desativada** para o app de clique automático. Caso contrário, o Android pode encerrar o app no meio da noite.
 - **Brilho da tela no mínimo.** Reduz o aquecimento e a luz que chega na janela.
-- **Câmera:** modo Pro, **ultra-wide (0,6×)**, RAW ativado, foco manual no infinito, balanço de branco fixo (ex.: 4000 K).
+- **Câmera:** modo Pro, **1× (câmera principal), 12M**, RAW ativado, foco manual no infinito, balanço de branco fixo (ex.: 4000 K).
 - **Exposição:** comece com **ISO 800 e 10 s**. No céu de São Paulo, 30 s pode estourar o fundo. Veja um frame e ajuste.
 - **Tags de local ativadas**, para gravar o GPS nas fotos.
 
@@ -91,9 +91,11 @@ Depois de converter, o `fitsheader` mostra qual câmera e quais ajustes foram us
 
 | Campo | Esperado | Se vier diferente |
 |---|---|---|
-| `FOCALLEN` | **2.2** (ultra-wide traseira) | 5.4 = câmera principal · **3.3 = câmera frontal (selfie)** |
+| `FOCALLEN` | **5.4** (câmera principal 1×; ver nota abaixo) | 2.2 = ultra-wide · **3.3 = câmera frontal (selfie)** |
 | `PIXKIND` | `cfa` ou `linear_rgb` (DNG) | `rgb` = só JPEG: RAW desligado ou fora do modo Pro |
 | `EXPTIME` / `ISOSPEED` | os valores fixados no Pro (ex.: 10 s / 800) | frações de segundo e ISO alto = modo automático |
+
+> **Observado em 2026-10-22:** no S24 (SM-S921B), o **modo Pro** oferece só **1× / 2× / 4× / 10×**. A **ultra-wide (0,6×) não aparece no Pro**. Por isso a referência passa a ser a **câmera principal (1×, 5,4 mm, ~87° na diagonal, aprox.)**, que tem campo menor mas sensor maior e lente mais clara: melhor para estrelas fracas. Use **12M**, não 50M. **[A VERIFICAR]** se o app Expert RAW libera a ultra-wide com exposição manual.
 
 Primeiro teste real (2026-10-22, 21:22): `FOCALLEN=3.3`, `EXPTIME≈1/17 s`, `ISOSPEED=2500`, `PIXKIND=rgb`. Ou seja: câmera frontal no modo automático. Hora (com fuso) e GPS chegaram corretos.
 
