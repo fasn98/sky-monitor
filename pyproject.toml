@@ -25,6 +25,7 @@ dev = ["pytest>=8", "mypy>=1.10", "ruff>=0.5"]
 [project.scripts]
 skymonitor-phone-ingest = "skymonitor.ingest.phone:main"
 skymonitor-dng-info = "skymonitor.ingest.dnginfo:main"
+skymonitor-preview = "skymonitor.preview:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/skymonitor"]
