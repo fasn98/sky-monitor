@@ -249,3 +249,37 @@ def test_dng_info_reports_truncated_file(make_dng: DngFactory) -> None:
     dng.write_bytes(dng.read_bytes()[:-500])  # simulate an incomplete copy
     text = "\n".join(inspect(dng))
     assert "LibRaw:" in text
+
+
+@pytest.mark.parametrize("force_fallback", [False, True])
+def test_linear_raw_dng(
+    make_linear_dng: DngFactory,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    force_fallback: bool,
+) -> None:
+    dng = make_linear_dng()
+    expected = np.load(dng.parent / f"{dng.name}.npy")
+    if force_fallback:
+        # Simulate the Galaxy S24 case: LibRaw refuses the file ("data corrupted at ...").
+        import rawpy
+
+        def refuse(*_args: object, **_kwargs: object) -> None:
+            raise rawpy._rawpy.LibRawDataError(b"data corrupted at 254497")
+
+        monkeypatch.setattr(rawpy, "imread", refuse)
+    out, _ = convert_to_fits(dng, tmp_path / "out")
+    with fits.open(out) as hdul:
+        hdr, data = hdul[0].header, hdul[0].data
+    assert hdr["PIXKIND"] == "linear_rgb"
+    assert hdr["DECODER"] == ("tifffile" if force_fallback else "libraw")
+    assert hdr["LINEAR"] is True
+    assert hdr["WHITELVL"] == 4095
+    np.testing.assert_array_equal(data, np.moveaxis(expected, -1, 0))
+
+
+def test_corrupt_dng_reports_both_decoders(tmp_path: Path) -> None:
+    bad = tmp_path / "bad.dng"
+    bad.write_bytes(b"II*\x00" + b"\x00" * 64)
+    with pytest.raises(ValueError, match=r"LibRaw.*tifffile"):
+        convert_to_fits(bad, tmp_path / "out")

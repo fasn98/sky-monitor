@@ -60,7 +60,10 @@ def describe_page(page: Any, label: str) -> list[str]:
         if tag is not None:
             value = tag.value
             if isinstance(value, bytes):
-                value = value.decode("ascii", "replace").strip("\x00")
+                if code in (50706, 33422):  # DNGVersion, CFAPattern: byte arrays
+                    value = tuple(value)
+                else:
+                    value = value.decode("ascii", "replace").strip("\x00")
             lines.append(f"    {name} = {value}")
     return lines
 

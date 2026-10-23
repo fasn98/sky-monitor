@@ -98,6 +98,7 @@ class PixelData:
     bayer_pattern: str | None = None
     black_levels: tuple[float, ...] | None = None
     white_level: int | None = None
+    decoder: str | None = None
 
 
 # --------------------------------------------------------------------------- EXIF
@@ -272,29 +273,103 @@ def load_pixels(path: Path) -> PixelData:
     if suffix in RAW_SUFFIXES:
         import rawpy  # imported lazily: LibRaw is only needed for RAW files
 
-        with rawpy.imread(str(path)) as raw:
-            data = np.array(raw.raw_image_visible, dtype=np.uint16, copy=True)
-            # raw_pattern is relative to the visible area's top-left pixel. Confirmed by
-            # tests on synthetic DNGs (all 4 Bayer layouts, no sensor margins).
-            # [A VERIFICAR com DNG real do S24, que pode ter margens/ActiveArea.]
-            raw_pattern = raw.raw_pattern
-            pattern = (
-                bayer_pattern_string(raw_pattern, raw.color_desc)
-                if raw_pattern is not None
-                else None
-            )
-            black = tuple(float(b) for b in raw.black_level_per_channel)
-            white = int(raw.white_level)
-        if data.ndim == 3:
-            # Some phones write already-demosaiced "LinearRaw" DNGs (no Bayer mosaic).
-            # [A VERIFICAR] which kind the S24 Pro mode produces.
-            return PixelData(np.moveaxis(data, -1, 0).copy(), "linear_rgb", None, black, white)
-        return PixelData(data, "cfa", pattern, black, white)
+        try:
+            return _load_dng_libraw(path, rawpy)
+        except (rawpy._rawpy.LibRawError, OSError) as exc:
+            # LibRaw rejects some phone DNGs, e.g. Galaxy S24 Pro-mode files
+            # (LinearRaw + lossless JPEG): "data corrupted at ...". Fall back to a plain
+            # TIFF/DNG reader. The original LibRaw error is kept if that also fails.
+            try:
+                return _load_dng_tifffile(path)
+            except Exception as fallback_exc:
+                raise ValueError(
+                    f"LibRaw: {exc}; leitor alternativo (tifffile): {fallback_exc}"
+                ) from fallback_exc
     if suffix in JPEG_SUFFIXES:
         with Image.open(path) as img:
             rgb = np.asarray(img.convert("RGB"), dtype=np.uint8)
-        return PixelData(np.moveaxis(rgb, -1, 0).copy(), "rgb")
+        return PixelData(np.moveaxis(rgb, -1, 0).copy(), "rgb", decoder="pillow")
     raise ValueError(f"Unsupported file type: {path.suffix}")
+
+
+def _load_dng_libraw(path: Path, rawpy: Any) -> PixelData:
+    with rawpy.imread(str(path)) as raw:
+        data = np.array(raw.raw_image_visible, dtype=np.uint16, copy=True)
+        # raw_pattern is relative to the visible area's top-left pixel. Confirmed by
+        # tests on synthetic DNGs (all 4 Bayer layouts, no sensor margins).
+        # [A VERIFICAR com DNG real do S24, que pode ter margens/ActiveArea.]
+        raw_pattern = raw.raw_pattern
+        pattern = (
+            bayer_pattern_string(raw_pattern, raw.color_desc) if raw_pattern is not None else None
+        )
+        black = tuple(float(b) for b in raw.black_level_per_channel)
+        white = int(raw.white_level)
+        n_colors = int(raw.num_colors)
+    if data.ndim == 3:
+        # LibRaw pads LinearRaw images to 4 channels; keep only the real colour planes.
+        data = data[..., :n_colors]
+        black = black[:n_colors]
+        # Some phones write already-demosaiced "LinearRaw" DNGs (no Bayer mosaic).
+        return PixelData(
+            np.moveaxis(data, -1, 0).copy(), "linear_rgb", None, black, white, "libraw"
+        )
+    return PixelData(data, "cfa", pattern, black, white, "libraw")
+
+
+_PHOTOMETRIC_CFA = 32803
+_PHOTOMETRIC_LINEAR_RAW = 34892
+_TAG_CFA_PATTERN = 33422
+_TAG_BLACK_LEVEL = 50714
+_TAG_WHITE_LEVEL = 50717
+_CFA_LETTERS = {0: "R", 1: "G", 2: "B"}
+
+
+def _load_dng_tifffile(path: Path) -> PixelData:
+    """Read the main raw image of a DNG with tifffile (+ imagecodecs for lossless JPEG).
+
+    Observed on the Galaxy S24 (2026-10-22): Pro-mode DNGs are LinearRaw (already
+    demosaiced, 3 x 12 bit), lossless-JPEG compressed, BlackLevel 0, WhiteLevel 4095.
+    Which processing Samsung applies before writing (noise reduction, lens shading…)
+    is not documented. [A VERIFICAR]
+    """
+    import tifffile
+
+    with tifffile.TiffFile(path) as tif:
+        candidates = [tif.pages[0], *(getattr(tif.pages[0], "pages", None) or [])]
+        main = None
+        for page in candidates:
+            subfile = page.tags.get(254)
+            is_main = subfile is None or int(subfile.value) == 0
+            if is_main and int(page.photometric) in (_PHOTOMETRIC_CFA, _PHOTOMETRIC_LINEAR_RAW):
+                main = page
+                break
+        if main is None:
+            raise ValueError("nenhuma imagem RAW principal (CFA ou LinearRaw) no DNG")
+        data = np.asarray(main.asarray(), dtype=np.uint16)
+        black_tag = main.tags.get(_TAG_BLACK_LEVEL)
+        white_tag = main.tags.get(_TAG_WHITE_LEVEL)
+        black = tuple(float(v) for v in np.atleast_1d(black_tag.value)) if black_tag else None
+        white_values = np.atleast_1d(white_tag.value) if white_tag else None
+        white = int(white_values.min()) if white_values is not None else None
+
+        if int(main.photometric) == _PHOTOMETRIC_LINEAR_RAW:
+            if data.ndim != 3:
+                raise ValueError(f"LinearRaw com forma inesperada {data.shape}")
+            channels = data.shape[-1]
+            if black and len(black) % channels == 0:
+                # BlackLevel may repeat per pixel of a repeat pattern: average per channel
+                black = tuple(float(np.mean(black[c::channels])) for c in range(channels))
+            return PixelData(
+                np.moveaxis(data, -1, 0).copy(), "linear_rgb", None, black, white, "tifffile"
+            )
+
+        cfa_tag = main.tags.get(_TAG_CFA_PATTERN)
+        pattern = (
+            "".join(_CFA_LETTERS.get(int(v), "?") for v in bytes(cfa_tag.value))
+            if cfa_tag
+            else None
+        )
+        return PixelData(data, "cfa", pattern, black, white, "tifffile")
 
 
 # --------------------------------------------------------------------------- FITS
@@ -331,6 +406,7 @@ def build_header(meta: PhoneFrameMetadata, pixels: PixelData) -> fits.Header:
     put("LOCSRC", meta.location_source, "exif_gps or fallback_site")
     put("ROWORDER", "TOP-DOWN", "Row 0 is the top of the image")
     put("PIXKIND", pixels.kind, "cfa, linear_rgb or rgb")
+    put("DECODER", pixels.decoder, "Library that decoded the pixels")
 
     if pixels.kind == "cfa":
         put("LINEAR", True, "Pixel values are linear in flux")

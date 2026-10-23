@@ -108,3 +108,29 @@ def make_dng(tmp_path: Path) -> DngFactory:
         return path
 
     return _make
+
+
+@pytest.fixture
+def make_linear_dng(tmp_path: Path) -> DngFactory:
+    """Uncompressed LinearRaw DNG (already demosaiced, as the Galaxy S24 Pro mode writes).
+
+    LibRaw rejects this minimal file, which exercises the tifffile fallback path.
+    """
+    import numpy as np
+    import tifffile
+
+    def _make(name: str = "linear.dng", *, shape: tuple[int, int] = (24, 36)) -> Path:
+        h, w = shape
+        data = (np.arange(h * w * 3, dtype=np.uint16).reshape(h, w, 3) % 4000) + 10
+        tags = [
+            (_DNG_VERSION, "B", 4, (1, 4, 0, 0), True),
+            (_UNIQUE_CAMERA_MODEL, "s", 0, "Galaxy S24", True),
+            (_BLACK_LEVEL, "I", 3, (0, 0, 0), True),
+            (_WHITE_LEVEL, "I", 3, (4095, 4095, 4095), True),
+        ]
+        path = tmp_path / name
+        tifffile.imwrite(path, data, photometric=34892, planarconfig="contig", extratags=tags)
+        np.save(tmp_path / f"{name}.npy", data)
+        return path
+
+    return _make

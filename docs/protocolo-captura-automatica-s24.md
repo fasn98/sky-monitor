@@ -101,6 +101,14 @@ Primeiro teste real (2026-10-22, 21:22): `FOCALLEN=3.3`, `EXPTIME≈1/17 s`, `IS
 
 > Para apontar a câmera **traseira** para o céu, a tela fica virada para baixo e você não a vê. Ajuste tudo antes, vire o celular e dispare com o timer (Camera Assistant) ou com um controle remoto Bluetooth/Galaxy Watch.
 
+### O que o DNG do S24 é (verificado em 2026-10-22)
+`skymonitor-dng-info` em dois DNGs do modo Pro mostrou:
+- **LinearRaw** (fotometria 34892): o arquivo **já vem demosaicado**, com 3 canais de 12 bits. **Não é mosaico Bayer.** No FITS, `PIXKIND = linear_rgb`.
+- Compressão **lossless JPEG** (7), BlackLevel 0, WhiteLevel 4095.
+- **O LibRaw recusa** esses arquivos ("data corrupted at …"), mesmo com a cópia íntegra (tamanho idêntico no celular e no notebook). O conversor usa um **leitor alternativo** (tifffile + imagecodecs), e o FITS registra qual foi usado em `DECODER`.
+- Imagem de **3060 × 3060**, ou seja, proporção **1:1**. Para usar o sensor inteiro, configure **4:3** na câmera (12 MP = 4080 × 3060).
+- **[A VERIFICAR]** que processamento a Samsung aplica antes de gravar (redução de ruído, correção de sombreamento, nitidez). Os valores continuam lineares, mas não são o sinal bruto do sensor. Para detecção de estrelas e nuvens isso basta. Para fotometria fina, conta como limitação.
+
 ## 6. Registro da sessão
 
 Crie um `notas.txt` na pasta da sessão com:
