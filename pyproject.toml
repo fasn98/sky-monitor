@@ -15,13 +15,15 @@ dependencies = [
     "exifread>=3.0",
     "rawpy>=0.21",
     "pillow>=10.0",
+    "tifffile>=2024.1",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "mypy>=1.10", "ruff>=0.5", "tifffile>=2024.1"]
+dev = ["pytest>=8", "mypy>=1.10", "ruff>=0.5"]
 
 [project.scripts]
 skymonitor-phone-ingest = "skymonitor.ingest.phone:main"
+skymonitor-dng-info = "skymonitor.ingest.dnginfo:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/skymonitor"]

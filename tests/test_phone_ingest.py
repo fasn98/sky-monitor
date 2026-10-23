@@ -224,3 +224,28 @@ def test_expand_searches_subfolders(make_jpeg: JpegFactory, tmp_path: Path) -> N
     src = make_jpeg("night.jpg")
     src.rename(sub / "night.jpg")
     assert [p.name for p in _expand([tmp_path])] == ["night.jpg"]
+
+
+def test_cli_skips_existing_outputs(make_jpeg: JpegFactory, tmp_path: Path) -> None:
+    make_jpeg("a.jpg")
+    out_dir = tmp_path / "fits"
+    assert main([str(tmp_path), "-o", str(out_dir)]) == 0
+    assert main([str(tmp_path), "-o", str(out_dir)]) == 0  # second run: skipped, not failed
+
+
+def test_dng_info_reports_structure(make_dng: DngFactory) -> None:
+    from skymonitor.ingest.dnginfo import inspect
+
+    text = "\n".join(inspect(make_dng(pattern="GRBG")))
+    assert "photometric=32803 (CFA (Bayer))" in text
+    assert "DNGVersion" in text
+    assert "LibRaw: OK" in text
+
+
+def test_dng_info_reports_truncated_file(make_dng: DngFactory) -> None:
+    from skymonitor.ingest.dnginfo import inspect
+
+    dng = make_dng()
+    dng.write_bytes(dng.read_bytes()[:-500])  # simulate an incomplete copy
+    text = "\n".join(inspect(dng))
+    assert "LibRaw:" in text

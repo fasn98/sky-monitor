@@ -460,6 +460,9 @@ def _convert_and_report(
 ) -> int:
     failures = 0
     for path in paths:
+        if not overwrite and (out_dir / f"{path.stem}.fits").exists():
+            print(f"PULADO {path.name}: FITS já existe (use --overwrite para refazer)", flush=True)
+            continue
         try:
             out, meta = convert_to_fits(
                 path, out_dir, fallback_tz=tz, fallback_site=site, overwrite=overwrite
