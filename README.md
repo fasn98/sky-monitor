@@ -24,6 +24,7 @@ Pensado para uma estação em varanda de apartamento em Santa Catarina, Brasil (
 - [Protocolo de captura com celular](docs/protocolo-captura-celular.md)
 - [Captura automática com o S24 (sem root)](docs/protocolo-captura-automatica-s24.md)
 - [BOM — estação all-sky em protoboard](docs/BOM.md)
+- [Resumo de passagem de contexto (handoff)](docs/HANDOFF.md)
 
 ## Desenvolvimento
 
